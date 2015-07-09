@@ -12,7 +12,7 @@
   },
   "dependencies": {
   	"webmodules-foo" : ">=0.1.5",
-  	"webmodules-headjs" : "1.*.*"
+  	"webmodules-headjs" : "1.0.3"
   },
   "keywords": [
     "bootloader"
