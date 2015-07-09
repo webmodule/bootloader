@@ -143,13 +143,31 @@
 				}
 				return output;
 			}
-		} 
+		},
+		fill : function(output){
+			for (var i in output.files){
+				this.js.loaded[output.files[i]] = true;
+			}
+			for (var i in output.load){
+				this.js.loaded[output.load[i]] = true;
+			}
+			for (var i in output.loadingPackage){
+				this.pkg.loaded[output.loadingPackage[i]] = true;
+			}
+		}
 	};
 	
+	
+	
 	var require = function(){
+		if(foo.__bundled__ && __bundled__.length){
+			for(var i in foo.__bundled__){
+				files.fill(files.pkg.resolve(foo.__bundled__[i]));
+				foo.__bundled__ = [];
+			}
+		}
 		var fileList =[],lodList =[];
 		var output = files.pkg.resolve(arguments);
-		console.log(output.load)
 		files.js.load(output.load, function(){
 			console.log("files loaded",output.load)
 		});
