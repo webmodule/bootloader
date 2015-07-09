@@ -1,0 +1,10 @@
+{
+	"name" : "webmodules/bootloader",
+	"webmodules/bootloader": {
+		"js": ["bootloader.js"],
+		"on": ["webmodules/foo","webmodules/headjs"]
+	}
+}
+
+
+

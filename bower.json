@@ -1,0 +1,19 @@
+{
+  "name": "webmodules-bootloader",
+  "version": "1.0.0",
+  "main": "bootloader.js",
+  "description": "Module loader",
+  "authors": [
+    "lalit.tanwar07@gmail.com"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/webmodule/bootloader.git"
+  },
+  "dependencies": {
+  },
+  "keywords": [
+    "bootloader"
+  ],
+  "license": "MIT"
+}
