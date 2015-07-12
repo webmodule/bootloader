@@ -269,20 +269,42 @@
 		}
 	};
 
+	function Require(definer){
+		this.definer = definer;
+	}
+	Require.prototype = {
+		to : function(definer){
+			if(definer !==undefined){
+				this.definer = definer;
+				if(typeof this.definer === "function"){
+					return this.definer.call(foo,define,module)
+				}
+			}
+			return this;
+		},
+		define : define
+	};
+	
 	var require = function() {
 		if (foo.__bundled__ && foo.__bundled__.length) {
 			var fillObj = files.pkg.resolve(foo.__bundled__);
 			files.fill(fillObj);
 			foo.__bundled__ = [];
 		}
+		var callback;
 		if (arguments.length > 0) {
-			var fileList = [], lodList = [];
-			var output = files.pkg.resolve(arguments);
-			files.js.load(output.load, function() {
-				files.fill(output);
-			});
-			return output;
+			if(typeof arguments[arguments.length-1] === "function"){
+				callback = [].pop.apply(arguments);
+			}
+			if(arguments.length>0){
+				var fileList = [], lodList = [];
+				var output = files.pkg.resolve(arguments);
+				files.js.load(output.load, function() {
+					files.fill(output);
+				});
+			}
 		}
+		return (new Require()).to(callback);
 	}
 
 	var resourceLoader = function() {
@@ -334,10 +356,13 @@
 		resourceLoader();
 	};
 	foo.bootloader.ready = ready;
+	foo.bootloader.config = function(){
+		return config;
+	};
 
-	foo._define_ = define;
-	foo._module_ = module;
-	foo._require_ = require;
+	foo._setFoo_("define",define);
+	foo._setFoo_("module",module);
+	foo._setFoo_("require",require);
 
 	foo.__get_all__ = function() {
 		return {
