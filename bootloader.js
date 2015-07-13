@@ -82,8 +82,8 @@
 		extend : function(parentModuleName) {
 			if (LIB[parentModuleName]) {
 				this.__extendedFrom___ = parentModuleName;
-				this.__modulePrototype__ = Object
-						.create(module(parentModuleName) || {});
+				this.__modulePrototype__ = foo.mixin(Object
+						.create(module(parentModuleName) || {}),this.__modulePrototype__);
 				LIB[parentModuleName].callOwnFunction("_extended_", this);
 			} else {
 				console.error("Parent Module " + parentModuleName
