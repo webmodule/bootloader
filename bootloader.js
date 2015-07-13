@@ -9,11 +9,11 @@
 	 * @param moduleName
 	 * @returns {*|{}|h.__modulePrototype__}
 	 */
-	var module = function(moduleName) {
+	var module = function(moduleName,skipWarning) {
 		if (LIB[moduleName]) {
 			return LIB[moduleName].__modulePrototype__;
 		} else if (__module__) {
-			return __module__(moduleName);
+			return __module__(moduleName) || (function(){ !skipWarning && console.error("Module:",moduleName, "does not exists") })();
 		}
 	};
 
@@ -254,7 +254,7 @@
 				this.js.loaded[output.files[i]] = true;
 				var info = foo.URI.info(output.files[i], config.resourcesDir);
 				var moduleName = info.file.replace(/([\w]+)\.js$|.css$/, "$1");
-				var moduleProto = module(moduleName);
+				var moduleProto = module(moduleName, true);
 				if (moduleProto) {
 					moduleProto.__file__ = info.file;
 					moduleProto.__dir__ = info.dir;
@@ -273,15 +273,22 @@
 		this.definer = definer;
 	}
 	Require.prototype = {
+		list : [],
 		to : function(definer){
 			if(definer !==undefined){
-				this.definer = definer;
-				if(typeof this.definer === "function"){
-					return this.definer.call(foo,define,module)
+				if(typeof definer === "function"){
+					//this.list.push(this.definer);
+					//this.toExecute();
+					definer.call(foo,define,module)
 				}
 			}
 			return this;
 		},
+		toExecute : foo.debounce(function(){
+			while(cb = this.list.pop()){
+				cb.call(foo,define,module);
+			}
+		},10),
 		define : define
 	};
 	
@@ -292,19 +299,22 @@
 			foo.__bundled__ = [];
 		}
 		var callback;
+		var req = new Require();
 		if (arguments.length > 0) {
 			if(typeof arguments[arguments.length-1] === "function"){
 				callback = [].pop.apply(arguments);
 			}
-			if(arguments.length>0){
-				var fileList = [], lodList = [];
-				var output = files.pkg.resolve(arguments);
+			var output = files.pkg.resolve(arguments);
+			if(arguments.length>0 && output.load.length>0){
 				files.js.load(output.load, function() {
+					(req).to(callback);
 					files.fill(output);
 				});
+			} else {
+				return (req).to(callback);
 			}
 		}
-		return (new Require()).to(callback);
+		return (req);
 	}
 
 	var resourceLoader = function() {
