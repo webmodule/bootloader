@@ -21,7 +21,6 @@
 	var STATE = [];
 	var setReady = function(num) {
 		STATE[num] = 0;
-		console.log("--", num);
 		ready();
 	};
 
@@ -81,9 +80,10 @@
 		 */
 		extend : function(parentModuleName) {
 			if (LIB[parentModuleName]) {
-				this.__extendedFrom___ = parentModuleName;
+				this.__modulePrototype__.__extend__ = parentModuleName;
 				this.__modulePrototype__ = foo.mixin(Object
 						.create(module(parentModuleName) || {}),this.__modulePrototype__);
+				
 				LIB[parentModuleName].callOwnFunction("_extended_", this);
 			} else {
 				console.error("Parent Module " + parentModuleName
@@ -105,6 +105,7 @@
 			return this;
 		},
 		as : function(definition) {
+			var self = this;
 			if (typeof definition === 'function') {
 				var ChildProto;
 				if (this.dependsOn === undefined) {
@@ -141,6 +142,7 @@
 		this.__module__ = moduleName;
 		this.__file__ = file;
 		this.__dir__ = "";
+		this.__extend__ = null;
 	};
 	AbstractModule.prototype = {
 		create : function(){
@@ -155,8 +157,14 @@
 		},
 		path : function(path){
 			return foo.URI(path,this.__dir__);
+		},
+		parent : function(){
+			if(this.__extend__){
+				return module(this.__extend__);
+			} else return AbstractModule.prototype;
 		}
 	};
+	
 	/**
 	 * 
 	 * Defines and registers module
@@ -188,6 +196,8 @@
 
 		return LIB[moduleName];
 	};
+	
+	define("AbstractModule",AbstractModule.prototype);
 
 	// Resources loading...
 	var config = {
@@ -335,7 +345,6 @@
 				});
 
 				if (indexJs) {
-					console.error(indexJs)
 					files.js.load(indexJs);
 				} else if (indexBundle) {
 					require(indexBundle);
