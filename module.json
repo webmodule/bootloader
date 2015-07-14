@@ -1,8 +1,8 @@
 {
-	"name" : "webmodules/bootloader",
+	"name": "webmodules/bootloader",
 	"webmodules/bootloader": {
 		"js": ["bootloader.js"],
-		"on": ["webmodules/foo","webmodules/foo/uri","webmodules/headjs"]
+		"on": ["webmodules/foo", "webmodules/foo/uri", "webmodules/headjs"]
 	}
 }
 
