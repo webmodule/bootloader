@@ -203,7 +203,7 @@
 	var config = {
 		baseUrl : "",
 		appContext : "",
-		resourcesDir : "",
+		resourcesDir : null,
 		cdnServer : "",
 		resourceUrl : "resources.json",
 		debug : false,
@@ -366,13 +366,38 @@
 		xmlhttp.send();
 	};
 
-	foo.bootloader = function(_config) {
+	var _config_set_ = false
+	var localConfig = {};
+	var isLocalStorageAvailable = (function(){
+	  "use strict";
+	  try {
+		  var mod = "modernizr";
+		  foo.localStorage.setItem(mod, mod);
+		  foo.localStorage.removeItem(mod);
+		  return true;
+	  } catch(e) {
+		  return false;
+	  }
+	})();
+	
+	foo.bootloader = function(_config,init) {
 		for ( var i in _config) {
 			config[i] = _config[i];
 		}
-		config.resourcesDir = config.resourcesDir || config.appContext;
-		setReady(1);
-		resourceLoader();
+		if(init!==false && _config_set_ == false){
+			if(isLocalStorageAvailable){
+				var localConfig = JSON.parse(foo.localStorage.getItem("bootConfig") || null);
+				for(var i in localConfig){
+					config[i] = localConfig[i];
+				}
+			}
+			if(!foo.is.Value(config.resourcesDir)){
+				config.resourcesDir = config.resourcesDir || config.appContext;
+			}
+			setReady(1);
+			resourceLoader();
+			_config_set_ = true;
+		}
 	};
 	foo.bootloader.ready = ready;
 	foo.bootloader.config = function(){
@@ -404,6 +429,11 @@
 		document.addEventListener("DOMContentLoaded", function(event) {
 			setReady(4);
 		});
+	} else {
+		console.error("document.load is not supported, trigger bootloader.ready manually when document is ready")
 	}
 	setReady(0);
 })(this);
+
+var scripts = document.getElementsByTagName("script");
+eval( scripts[ scripts.length - 1 ].innerHTML );
