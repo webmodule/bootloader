@@ -1,4 +1,5 @@
 (function(foo) {
+	var bootloader,fileUtil,config;
 	var LIB = {}, READY_MAP = [];
 
 	var __module__ = foo._module_;
@@ -9,12 +10,25 @@
 	 * @param moduleName
 	 * @returns {*|{}|h.__modulePrototype__}
 	 */
-	var module = function(moduleName,skipWarning) {
+	var module = function(moduleName,skipFallback) {
 		if (LIB[moduleName]) {
 			return LIB[moduleName].__modulePrototype__;
 		} else if (__module__) {
-			return __module__(moduleName) || (function(){ !skipWarning && console.error("Module:",moduleName, "does not exists") })();
+			return __module__(moduleName) || (function(){
+				if(!skipFallback){
+					var myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound);
+					if(myModule===undefined){
+						console.error("Module:",moduleName, "does not exists") 
+					}
+					return myModule;
+				}
+			})();
 		}
+	};
+	var moduleNotFound = function(moduleName){
+		var bundleName = fileUtil.forModule(moduleName,true);
+		require(bundleName);
+		return module(moduleName,true);
 	};
 
 	// Bootloaded ready functionality
@@ -22,6 +36,9 @@
 	var setReady = function(num) {
 		STATE[num] = 0;
 		ready();
+	};
+	var isReady = function(){
+		return (STATE.join("-") === "0-0-0-0-0-0");
 	};
 
 	/**
@@ -33,10 +50,10 @@
 		if (arguments.length > 0) {
 			READY_MAP.push(callback);
 			ready();
-		} else if (STATE.join("-") === "0-0-0-0-0") {
+		} else if (isReady()) {
 			console.log("bootloader is ready");
 			for ( var i in READY_MAP) {
-				READY_MAP[i].call(foo);
+				foo.setTimeout(READY_MAP[i]);
 			}
 			READY_MAP = [];
 			ready = foo.setTimeout;
@@ -130,7 +147,7 @@
 		callOwnFunction : function(prop) {
 			if (this.__modulePrototype__.hasOwnProperty(prop) === true
 					&& typeof this.__modulePrototype__[prop] === "function") {
-				return this.__modulePrototype__[prop].apply(this, arguments);
+				return this.__modulePrototype__[prop].apply(this.__modulePrototype__, arguments);
 			}
 		}
 	};
@@ -183,42 +200,83 @@
 		} else if (typeof moduleInfo === "string") {
 			moduleName = moduleInfo;
 		}
+		
 		LIB[moduleName] = new Moduler(new AbstractModule(moduleName), onModules);
 		LIB[moduleName].__moduleName__ = moduleName;
 
 		if (definition !== undefined) {
 			LIB[moduleName].as(definition);
 		}
-
 		ready(function() {
 			LIB[moduleName].callOwnFunction("_ready_");
 		});
-
 		return LIB[moduleName];
 	};
 	
 	define("AbstractModule",AbstractModule.prototype);
-
+	
 	// Resources loading...
-	var config = {
+	config = {
 		baseUrl : "",
 		appContext : "",
-		resourcesDir : null,
-		cdnServer : "",
-		resourceUrl : "resources.json",
+		resourceDir : null,
+		resourceUrl : "",
+		resourceJson : "resources.json",
 		debug : false,
 		android : true,
 		indexJs : undefined, // 'app.js',
 		resource : {}
 	};
-
-	var files = {
+	
+	
+	fileUtil = {
+		get : function(url,callback,sync){
+			var xmlhttp = new XMLHttpRequest();
+			if(foo.is.Function(callback)){
+				xmlhttp.onreadystatechange = function() {
+					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						callback.call(xmlhttp,xmlhttp.responseText);
+					}
+				}
+			}
+			xmlhttp.open("GET",url,sync || false);
+			return xmlhttp;
+		},
 		js : {
+			loading : {},
 			loaded : {},
-			load : function(files, callback) {
-				return head.load(files.map(function(file){
-					return URI(file,config.resourcesDir);
-				}), callback);
+			loadScript : function(inFileName) {
+				var aScript, aScriptSource;
+				fileUtil.get(inFileName,function(responseText){
+					// set the returned script text while adding special comment to auto include in debugger source listing:
+					aScriptSource = responseText + '\n////# sourceURL='+ inFileName + '\n';
+					if (true){
+						aScript = document.createElement('script');
+						aScript.type = 'text/javascript';
+						aScript.text = aScriptSource;
+						document.getElementsByTagName('head')[0].appendChild(aScript);
+						aScript.src = inFileName;
+					} else {
+						eval(aScriptSource);
+					}
+				},false).send();
+			},
+			load : function(filesToLoad, callback, syncLoad){
+				var filesToLoad = filesToLoad.filter(function(file){
+					return (!fileUtil.js.loading[file] && !fileUtil.js.loaded[file]);
+				});
+				if(syncLoad){
+					filesToLoad.map(function(file){
+						fileUtil.js.loading[file] = true;
+						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir));
+						fileUtil.js.loaded[file] = true;
+					});
+					if(callback) callback();
+				} else {
+					return head.load(filesToLoad.map(function(file){
+						return config.resourceUrl+URI(file,config.resourceDir);
+					}),callback);	
+				}
 			}
 		},
 		pkg : {
@@ -237,15 +295,15 @@
 						if (myPackage) {
 							output.loadingPackage[packageName] = packageName;
 							if (myPackage.on) {
-								files.pkg.resolve(myPackage.on, output);
+								fileUtil.pkg.resolve(myPackage.on, output);
 							}
-							var budnled = (!config.debug && myPackage.bundled && !files.js.loaded[myPackage.bundled]);
+							var budnled = (!config.debug && myPackage.bundled && !fileUtil.js.loaded[myPackage.bundled]);
 							if (budnled) {
 								output.load.push(myPackage.bundled);
 							}
 							for ( var j in myPackage.js) {
 								var file = myPackage.js[j];
-								if (!files.js.loaded[file]) {
+								if (!fileUtil.js.loaded[file]) {
 									output.files.push(file)
 									if (!budnled) {
 										output.load.push(file)
@@ -258,16 +316,35 @@
 				return output;
 			}
 		},
+		forModule : function(moduleName,notLoaded){
+			for(var bundleName in config.resource.bundles){
+				if(!notLoaded || !fileUtil.pkg.loaded[bundleName]){
+					var bundle = config.resource.bundles[bundleName];
+					for(var i in bundle.modules){
+						if(bundle.modules[i] = moduleName){
+							return bundleName;
+						}
+					}
+					for(var i in bundle.js){
+						var file = bundle.js[i];
+						var thisModuleName = file.replace(/([\/\w]+)\/([\.\w]+)\.js$/, "$2");
+						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded[file])){
+							return bundleName;
+						}
+					}
+				}
+			}
+		},
 		fill : function(output) {
 			for ( var i in output.files) {
 				var filePath = output.files[i];
 				this.js.loaded[output.files[i]] = true;
-				var info = foo.URI.info(output.files[i], config.resourcesDir);
+				var info = foo.URI.info(output.files[i], config.resourceUrl + config.resourceDir);
 				var moduleName = info.file.replace(/([\w]+)\.js$|.css$/, "$1");
 				var moduleProto = module(moduleName, true);
 				if (moduleProto) {
 					moduleProto.__file__ = info.file;
-					moduleProto.__dir__ = info.dir;
+					moduleProto.__dir__ = info.origin + info.dir;
 				}
 			}
 			for ( var i in output.load) {
@@ -304,66 +381,62 @@
 	
 	var require = function() {
 		if (foo.__bundled__ && foo.__bundled__.length) {
-			var fillObj = files.pkg.resolve(foo.__bundled__);
-			files.fill(fillObj);
+			var fillObj = fileUtil.pkg.resolve(foo.__bundled__);
+			fileUtil.fill(fillObj);
 			foo.__bundled__ = [];
 		}
-		var callback;
+		var callback, syncLoad;
 		var req = new Require();
 		if (arguments.length > 0) {
 			if(typeof arguments[arguments.length-1] === "function"){
 				callback = [].pop.apply(arguments);
+			} else {
+				syncLoad = true;
 			}
-			var output = files.pkg.resolve(arguments);
+			var output = fileUtil.pkg.resolve(arguments);
 			if(arguments.length>0 && output.load.length>0){
-				files.js.load(output.load, function() {
+				fileUtil.js.load(output.load, function() {
 					(req).to(callback);
-					files.fill(output);
-				});
+					fileUtil.fill(output);
+				},syncLoad && isReady());
 			} else {
 				return (req).to(callback);
 			}
 		}
 		return (req);
-	}
+	};
 
 	var resourceLoader = function() {
 
 		var xmlhttp = new XMLHttpRequest();
+		fileUtil.get(config.resourceUrl + "/" + config.resourceJson + "?_=" + (new Date()).getTime(), function(resp){
+			var resource = JSON.parse(this.responseText);
+			config.resource = resource;
+			var indexJs = config.indexJs || resource.indexJs;
+			var indexBundle = config.indexBundle || resource.indexBundle;
+			setReady(2);
 
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-				var resource = JSON.parse(this.responseText);
-				config.resource = resource;
-				var indexJs = config.indexJs || resource.indexJs;
-				var indexBundle = config.indexBundle || resource.indexBundle;
-				setReady(2);
+			head.ready(function() {
+				setReady(3);
+				console.log("App Loaded : Ready function");
+			});
 
-				head.ready(function() {
-					setReady(3);
-					console.log("App Loaded : Ready function");
-				});
-
-				if (indexJs) {
-					files.js.load(indexJs);
-				} else if (indexBundle) {
-					require(indexBundle);
-				}
-
-				if (false && a.css.mediaprint) {
-					var el = document.createElement('link');
-					el.setAttribute("rel", "stylesheet");
-					el.setAttribute("type", "text/css");
-					el.setAttribute("href", config.cdnServer + "/"
-							+ a.css.mediaprint);
-					el.setAttribute("media", "print");
-					document.getElementsByTagName('head')[0].appendChild(el);
-				}
+			if (indexJs) {
+				fileUtil.js.load(indexJs);
+			} else if (indexBundle) {
+				require(indexBundle);
 			}
-		};
-		xmlhttp.open("GET", config.cdnServer + "/" + config.resourceUrl + "?_="
-				+ (new Date()).getTime(), true);
-		xmlhttp.send();
+
+			if (false && a.css.mediaprint) {
+				var el = document.createElement('link');
+				el.setAttribute("rel", "stylesheet");
+				el.setAttribute("type", "text/css");
+				el.setAttribute("href", config.resourceUrl + "/"
+						+ a.css.mediaprint);
+				el.setAttribute("media", "print");
+				document.getElementsByTagName('head')[0].appendChild(el);
+			}
+		},true).send();
 	};
 
 	var _config_set_ = false
@@ -391,13 +464,17 @@
 					config[i] = localConfig[i];
 				}
 			}
-			if(!foo.is.Value(config.resourcesDir)){
-				config.resourcesDir = config.resourcesDir || config.appContext;
+			if(!foo.is.Value(config.resourceDir)){
+				config.resourceDir = config.resourceDir || config.appContext;
 			}
 			setReady(1);
 			resourceLoader();
 			_config_set_ = true;
 		}
+	};
+	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction){
+		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce.")
+		return defaultFunction(moduleName);
 	};
 	foo.bootloader.ready = ready;
 	foo.bootloader.config = function(){
@@ -429,6 +506,10 @@
 		document.addEventListener("DOMContentLoaded", function(event) {
 			setReady(4);
 		});
+		window.addEventListener('load',function(){
+			console.info("window is ready");
+			setReady(5);
+		},false);
 	} else {
 		console.error("document.load is not supported, trigger bootloader.ready manually when document is ready")
 	}
