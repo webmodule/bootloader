@@ -179,6 +179,14 @@
 			if(this.__extend__){
 				return module(this.__extend__);
 			} else return AbstractModule.prototype;
+		},
+		mixin : function(source) {
+			for ( var i in source) {
+				if (source.hasOwnProperty(i) === true) {
+					this[i] = source[i];
+				}
+			}
+			return this;
 		}
 	};
 	
