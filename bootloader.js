@@ -409,7 +409,8 @@
 	var resourceLoader = function() {
 
 		var xmlhttp = new XMLHttpRequest();
-		fileUtil.get(config.resourceUrl + "/" + config.resourceJson + "?_=" + (new Date()).getTime(), function(resp){
+		var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
+		fileUtil.get(info.href + "?_=" + (new Date()).getTime(), function(resp){
 			var resource = JSON.parse(this.responseText);
 			config.resource = resource;
 			var indexJs = config.indexJs || resource.indexJs;
