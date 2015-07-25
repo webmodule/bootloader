@@ -209,8 +209,8 @@
 	var define = function(moduleInfo, definition) {
 		var moduleName, onModules;
 		if (typeof moduleInfo === "object") {
-			moduleName = moduleInfo.name;
-			onModules = moduleInfo.dependsOn || moduleInfo.on;
+			moduleName = moduleInfo.name || moduleInfo.module;
+			onModules = moduleInfo.dependsOn || moduleInfo.modules;
 		} else if (typeof moduleInfo === "string") {
 			moduleName = moduleInfo;
 		}
@@ -251,7 +251,7 @@
 					if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
 						callback.call(xmlhttp,xmlhttp.responseText);
 					}
-				}
+				};
 			}
 			xmlhttp.open("GET",url,sync || false);
 			return xmlhttp;
@@ -302,7 +302,7 @@
 					loadingPackage : {}
 				};
 				for ( var i in packageNames) {
-					var packageName = packageNames[i]
+					var packageName = packageNames[i];
 					if (!this.loaded[packageName]
 							&& !output.loadingPackage[packageName]) {
 						var myPackage = config.resource.bundles[packageName];
@@ -318,9 +318,9 @@
 							for ( var j in myPackage.js) {
 								var file = myPackage.js[j];
 								if (!fileUtil.js.loaded[file]) {
-									output.files.push(file)
+									output.files.push(file);
 									if (!budnled) {
-										output.load.push(file)
+										output.load.push(file);
 									}
 								}
 							}
@@ -380,7 +380,7 @@
 				if(typeof definer === "function"){
 					//this.list.push(this.definer);
 					//this.toExecute();
-					definer.call(foo,define,module)
+					definer.call(foo,define,module);
 				}
 			}
 			return this;
@@ -454,7 +454,7 @@
 		},true).send();
 	};
 
-	var _config_set_ = false
+	var _config_set_ = false;
 	var localConfig = {};
 	var isLocalStorageAvailable = (function(){
 	  "use strict";
@@ -489,7 +489,7 @@
 		}
 	};
 	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction){
-		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce.")
+		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce.");
 		return defaultFunction(moduleName);
 	};
 	foo.bootloader.ready = ready;
@@ -527,7 +527,7 @@
 			setReady(5);
 		},false);
 	} else {
-		console.error("document.load is not supported, trigger bootloader.ready manually when document is ready")
+		console.error("document.load is not supported, trigger bootloader.ready manually when document is ready");
 	}
 	setReady(0);
 })(this);
