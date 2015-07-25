@@ -18,7 +18,7 @@
 				if(!skipFallback){
 					var myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound);
 					if(myModule===undefined){
-						console.error("Module:",moduleName, "does not exists") 
+						console.error("Module:",moduleName, "does not exists");
 					}
 					return myModule;
 				}
@@ -207,10 +207,11 @@
 	 * @returns {*}
 	 */
 	var define = function(moduleInfo, definition) {
-		var moduleName, onModules;
+		var moduleName, onModules, extendsFrom;
 		if (typeof moduleInfo === "object") {
 			moduleName = moduleInfo.name || moduleInfo.module;
 			onModules = moduleInfo.dependsOn || moduleInfo.modules;
+			extendsFrom = moduleInfo.extend;
 		} else if (typeof moduleInfo === "string") {
 			moduleName = moduleInfo;
 		}
