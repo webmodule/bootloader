@@ -97,10 +97,9 @@
 		 */
 		extend : function(parentModuleName) {
 			if (LIB[parentModuleName]) {
-				this.__modulePrototype__.__extend__ = parentModuleName;
 				this.__modulePrototype__ = foo.mixin(Object
 						.create(module(parentModuleName) || {}),this.__modulePrototype__);
-				
+				this.__modulePrototype__.__extend__ = [parentModuleName].concat(this.__modulePrototype__.__extend__);
 				LIB[parentModuleName].callOwnFunction("_extended_", this);
 			} else {
 				console.error("Parent Module " + parentModuleName
@@ -156,10 +155,10 @@
 	 * Abstract Module
 	 **************************************************************************/
 	var AbstractModule = function AbstractModule(moduleName, file) {
-		this.__module__ = moduleName;
+		this.name = moduleName;
 		this.__file__ = file;
 		this.__dir__ = "";
-		this.__extend__ = null;
+		this.__extend__ = [];
 	};
 	AbstractModule.prototype = {
 		create : function(){
@@ -176,8 +175,8 @@
 			return foo.URI(path,this.__dir__);
 		},
 		parent : function(){
-			if(this.__extend__){
-				return module(this.__extend__);
+			if(this.__extend__ && this.__extend__[0]){
+				return module(this.__extend__[0]);
 			} else return AbstractModule.prototype;
 		},
 		mixin : function(source) {
@@ -187,6 +186,13 @@
 				}
 			}
 			return this;
+		},
+		is : function(type){
+			if(this.__extend__ && this.__extend__[0] && is.String(type)){
+				return !!this.__extend__.filter(function(iType){
+					return iType === type;
+				})[0];
+			}
 		}
 	};
 	
