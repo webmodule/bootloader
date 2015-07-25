@@ -261,7 +261,7 @@
 			loaded : {},
 			loadScript : function(inFileName) {
 				var aScript, aScriptSource;
-				fileUtil.get(inFileName,function(responseText){
+				fileUtil.get(inFileName+"?_="+config.version,function(responseText){
 					// set the returned script text while adding special comment to auto include in debugger source listing:
 					aScriptSource = responseText + '\n////# sourceURL='+ inFileName + '\n';
 					if (true){
@@ -424,7 +424,7 @@
 
 		var xmlhttp = new XMLHttpRequest();
 		var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
-		fileUtil.get(info.href + "?_=" + (new Date()).getTime(), function(resp){
+		fileUtil.get(info.href + "?_=" + config.version, function(resp){
 			var resource = JSON.parse(this.responseText);
 			config.resource = resource;
 			var indexJs = config.indexJs || resource.indexJs;
@@ -482,6 +482,7 @@
 			if(!foo.is.Value(config.resourceDir)){
 				config.resourceDir = config.resourceDir || config.appContext;
 			}
+			config.version = config.version || (new Date()).getTime();
 			setReady(1);
 			resourceLoader();
 			_config_set_ = true;
