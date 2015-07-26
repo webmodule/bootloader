@@ -283,6 +283,7 @@
 			},
 			load : function(filesToLoad, callback, syncLoad){
 				var filesToLoad = filesToLoad.filter(function(file){
+					//console.log(fileUtil.js.loading,fileUtil.js.loaded)
 					return (!fileUtil.js.loading[file] && !fileUtil.js.loaded[file]);
 				});
 				if(syncLoad){
@@ -317,9 +318,13 @@
 							if (myPackage.on) {
 								fileUtil.pkg.resolve(myPackage.on, output);
 							}
-							var budnled = (!config.debug && myPackage.bundled && !fileUtil.js.loaded[myPackage.bundled]);
+							var budnled = (!config.debug && (myPackage.bundled && myPackage.bundled.length>0));
 							if (budnled) {
-								output.load.push(myPackage.bundled);
+								if(is.Array(myPackage.bundled)){
+									output.load = output.load.concat(myPackage.bundled);
+								} else {
+									output.load.push(myPackage.bundled);
+								}
 							}
 							for ( var j in myPackage.js) {
 								var file = myPackage.js[j];
@@ -414,6 +419,8 @@
 				syncLoad = true;
 			}
 			var output = fileUtil.pkg.resolve(arguments);
+			console.warn("===",arguments,output);
+			output.load = output.load.unique();
 			if(arguments.length>0 && output.load.length>0){
 				fileUtil.js.load(output.load, function() {
 					(req).to(callback);
