@@ -419,7 +419,6 @@
 				syncLoad = true;
 			}
 			var output = fileUtil.pkg.resolve(arguments);
-			console.warn("===",arguments,output);
 			output.load = output.load.unique();
 			if(arguments.length>0 && output.load.length>0){
 				fileUtil.js.load(output.load, function() {
