@@ -219,9 +219,14 @@
 		LIB[moduleName] = new Moduler(new AbstractModule(moduleName), onModules);
 		LIB[moduleName].__moduleName__ = moduleName;
 
+		if(is.String(extendsFrom)){
+			LIB[moduleName].extend(extendsFrom);
+		}
+		
 		if (definition !== undefined) {
 			LIB[moduleName].as(definition);
 		}
+		
 		ready(function() {
 			LIB[moduleName].callOwnFunction("_ready_");
 		});
