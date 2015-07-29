@@ -51,7 +51,7 @@
 			READY_MAP.push(callback);
 			ready();
 		} else if (isReady()) {
-			console.log("bootloader is ready");
+			console.info("Bootloader : bootloader is ready");
 			for ( var i in READY_MAP) {
 				foo.setTimeout(READY_MAP[i]);
 			}
@@ -130,7 +130,7 @@
 				} else {
 					var deps = [ this.__modulePrototype__ ];
 					for ( var i in this.dependsOn) {
-						deps.push(foo._module_(this.dependsOn[i]));
+						deps.push(foo._module_(this.dependsOn[i], true));
 					}
 					ChildProto = definition.apply(this, deps);
 				}
@@ -295,6 +295,7 @@
 					if(callback) callback();
 				} else {
 					return head.load(filesToLoad.map(function(file){
+						fileUtil.js.loading[file] = true;
 						return config.resourceUrl+URI(file,config.resourceDir);
 					}),callback);	
 				}
@@ -445,13 +446,20 @@
 
 			head.ready(function() {
 				setReady(3);
-				console.log("App Loaded : Ready function");
+				console.info("Bootloader : header Ready function");
 			});
 
 			if (indexJs) {
 				fileUtil.js.load(indexJs);
 			} else if (indexBundle) {
-				require(indexBundle);
+				var bundelsToLoad = [indexBundle]
+				if(config.debug){
+					bundelsToLoad = [indexBundle].concat(Object.keys(resource.bundles))
+				}
+				bundelsToLoad.push(function(){
+					console.info("Bootloader : Index bundle Loaded");
+				});
+				require.apply(require,bundelsToLoad);
 			}
 
 			if (false && a.css.mediaprint) {
@@ -498,6 +506,7 @@
 			setReady(1);
 			resourceLoader();
 			_config_set_ = true;
+			console.info("Bootloader : Config Set");
 		}
 	};
 	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction){
@@ -535,7 +544,7 @@
 			setReady(4);
 		});
 		window.addEventListener('load',function(){
-			console.info("window is ready");
+			console.info("Bootloader : window is ready");
 			setReady(5);
 		},false);
 	} else {
