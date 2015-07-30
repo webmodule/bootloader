@@ -206,7 +206,7 @@
 	 *            Module prototype or function returning module prototype.
 	 * @returns {*}
 	 */
-	var define = function(moduleInfo, definition) {
+	var define = function(moduleInfo, definition,definition2) {
 		var moduleName, onModules, extendsFrom;
 		if (typeof moduleInfo === "object") {
 			moduleName = moduleInfo.name || moduleInfo.module;
@@ -214,6 +214,10 @@
 			extendsFrom = moduleInfo.extend;
 		} else if (typeof moduleInfo === "string") {
 			moduleName = moduleInfo;
+			if(typeof definition === "string"){
+				extendsFrom = definition;
+				definition = definition2;
+			}
 		}
 		
 		LIB[moduleName] = new Moduler(new AbstractModule(moduleName), onModules);
@@ -452,9 +456,11 @@
 			if (indexJs) {
 				fileUtil.js.load(indexJs);
 			} else if (indexBundle) {
-				var bundelsToLoad = [indexBundle]
-				if(config.debug){
-					bundelsToLoad = [indexBundle].concat(Object.keys(resource.bundles))
+				var bundelsToLoad = [indexBundle];
+				if(config.debugBundles){
+					bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
+				} else  if(config.debug){
+					bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
 				}
 				bundelsToLoad.push(function(){
 					console.info("Bootloader : Index bundle Loaded");
