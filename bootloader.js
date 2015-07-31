@@ -10,13 +10,13 @@
 	 * @param moduleName
 	 * @returns {*|{}|h.__modulePrototype__}
 	 */
-	var module = function(moduleName,skipFallback) {
+	var module = function(moduleName,skipFallbackOrCallback) {
 		if (LIB[moduleName]) {
 			return LIB[moduleName].__modulePrototype__;
 		} else if (__module__) {
 			return __module__(moduleName) || (function(){
-				if(!skipFallback){
-					var myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound);
+				if(skipFallbackOrCallback !== false){
+					var myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound,skipFallbackOrCallback);
 					if(myModule===undefined){
 						console.error("Module:",moduleName, "does not exists");
 					}
@@ -25,10 +25,17 @@
 			})();
 		}
 	};
-	var moduleNotFound = function(moduleName){
+	var moduleNotFound = function(moduleName,callback){
 		var bundleName = fileUtil.forModule(moduleName,true);
-		require(bundleName);
-		return module(moduleName,true);
+		if(is.Function(callback)){
+			require(bundleName,function(){
+				console.info("I have searched for ",moduleName, "from", bundleName, "package");
+				callback(module(moduleName,false));
+			});
+		} else {
+			require(bundleName);
+		}
+		return module(moduleName,false);
 	};
 
 	// Bootloaded ready functionality
@@ -130,7 +137,7 @@
 				} else {
 					var deps = [ this.__modulePrototype__ ];
 					for ( var i in this.dependsOn) {
-						deps.push(foo._module_(this.dependsOn[i], true));
+						deps.push(foo._module_(this.dependsOn[i], false));
 					}
 					ChildProto = definition.apply(this, deps);
 				}
@@ -306,12 +313,44 @@
 			}
 		},
 		pkg : {
-			loaded : {},
+			loaded : {},loadedCss : {},
+			resolveCss : function(){
+				var output = output || {
+					filesCss : [], floadCss : [], loadingPackage : {}
+				};
+				for ( var i in packageNames) {
+					var packageName = packageNames[i];
+					if (!this.loadedCss[packageName]
+							&& !output.loadingPackage[packageName]) {
+						var myPackage = config.resource.bundles[packageName];
+						if (myPackage) {
+							output.loadingPackage[packageName] = packageName;
+							if (myPackage.on) {
+								fileUtil.pkg.resolveCss(myPackage.on, output);
+							}
+							var combined = (!config.debug && (myPackage.combined && myPackage.combined.length>0));
+							if (combined) {
+								if(is.Array(myPackage.combined)){
+									output.loadCss = output.loadCss.concat(myPackage.combined);
+								} else {
+									output.loadCss.push(myPackage.combined);
+								}
+							}
+							for ( var j in myPackage.css) {
+								var file = myPackage.css[j];
+								output.filesCss.push(file);
+								if (!combined) {
+									output.loadCss.push(file);
+								}
+							}
+						}
+					}
+				}
+				return output;
+			},
 			resolve : function(packageNames, output) {
 				var output = output || {
-					files : [],
-					load : [],
-					loadingPackage : {}
+					files : [], load : [], loadingPackage : {}
 				};
 				for ( var i in packageNames) {
 					var packageName = packageNames[i];
@@ -356,9 +395,9 @@
 						}
 					}
 					for(var i in bundle.js){
-						var file = bundle.js[i];
-						var thisModuleName = file.replace(/([\/\w]+)\/([\.\w]+)\.js$/, "$2");
-						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded[file])){
+						var yefile = bundle.js[i];
+						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");;
+						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded[yefile])){
 							return bundleName;
 						}
 					}
@@ -370,8 +409,8 @@
 				var filePath = output.files[i];
 				this.js.loaded[output.files[i]] = true;
 				var info = foo.URI.info(output.files[i], config.resourceUrl + config.resourceDir);
-				var moduleName = info.file.replace(/([\w]+)\.js$|.css$/, "$1");
-				var moduleProto = module(moduleName, true);
+				var moduleName = info.file.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");
+				var moduleProto = module(moduleName,false);
 				if (moduleProto) {
 					moduleProto.__file__ = info.file;
 					moduleProto.__dir__ = info.origin + info.dir;
@@ -407,6 +446,17 @@
 			}
 		},10),
 		define : define
+	};
+	
+	var importStyle = function(){
+		var output = fileUtil.pkg.resolveCss(arguments);
+		return head.load(output.loadCss.map(function(file){
+			return config.resourceUrl+URI(file,config.resourceDir);
+		}),function(){
+			for ( var packageName in output.loadingPackage) {
+				this.pkg.loadedCss[packageName] = packageName;
+			}
+		});
 	};
 	
 	var require = function() {
@@ -515,9 +565,9 @@
 			console.info("Bootloader : Config Set");
 		}
 	};
-	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction){
-		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce.");
-		return defaultFunction(moduleName);
+	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction,callback){
+		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
+		return defaultFunction(moduleName,callback);
 	};
 	foo.bootloader.ready = ready;
 	foo.bootloader.config = function(){
@@ -527,6 +577,7 @@
 	foo._setFoo_("define",define);
 	foo._setFoo_("module",module);
 	foo._setFoo_("require",require);
+	foo._setFoo_("importStyle",importStyle);
 
 	foo.__get_all__ = function() {
 		return {
