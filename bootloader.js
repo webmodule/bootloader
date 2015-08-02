@@ -12,6 +12,9 @@
 	 */
 	var module = function(moduleName,skipFallbackOrCallback) {
 		if (LIB[moduleName]) {
+			if(is.Function(skipFallbackOrCallback)){
+				skipFallbackOrCallback(LIB[moduleName].__modulePrototype__);
+			}
 			return LIB[moduleName].__modulePrototype__;
 		} else if (__module__) {
 			return __module__(moduleName) || (function(){
@@ -314,9 +317,9 @@
 		},
 		pkg : {
 			loaded : {},loadedCss : {},
-			resolveCss : function(){
+			resolveCss : function(packageNames, output){
 				var output = output || {
-					filesCss : [], floadCss : [], loadingPackage : {}
+					filesCss : [], loadCss : [], loadingPackage : {}
 				};
 				for ( var i in packageNames) {
 					var packageName = packageNames[i];
