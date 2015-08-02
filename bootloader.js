@@ -453,13 +453,14 @@
 	
 	var importStyle = function(){
 		var output = fileUtil.pkg.resolveCss(arguments);
-		return head.load(output.loadCss.map(function(file){
+		head.load(output.loadCss.map(function(file){
 			return config.resourceUrl+URI(file,config.resourceDir);
 		}),function(){
 			for ( var packageName in output.loadingPackage) {
-				this.pkg.loadedCss[packageName] = packageName;
+				fileUtil.pkg.loadedCss[packageName] = packageName;
 			}
 		});
+		return output;
 	};
 	
 	var require = function() {
