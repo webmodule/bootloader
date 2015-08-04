@@ -310,7 +310,7 @@
 				} else {
 					return head.load(filesToLoad.map(function(file){
 						fileUtil.js.loading[file] = true;
-						return config.resourceUrl+URI(file,config.resourceDir);
+						return config.resourceUrl+URI(file,config.resourceDir + '?_=' + config.version);
 					}),callback);	
 				}
 			}
