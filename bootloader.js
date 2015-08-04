@@ -562,7 +562,7 @@
 			if(!foo.is.Value(config.resourceDir)){
 				config.resourceDir = config.resourceDir || config.appContext;
 			}
-			config.version = config.version || (new Date()).getTime();
+			config.version = (config.debug === false && config.version)?  config.version: (new Date()).getTime() ;
 			setReady(1);
 			resourceLoader();
 			_config_set_ = true;
