@@ -17,22 +17,26 @@
 			}
 			return LIB[moduleName].__modulePrototype__;
 		} else if (__module__) {
-			return __module__(moduleName) || (function(){
-				if(skipFallbackOrCallback !== false){
-					var myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound,skipFallbackOrCallback);
+			return (function(myModule){
+				if(myModule){
+					if(is.Function(skipFallbackOrCallback)){
+						skipFallbackOrCallback(myModule);
+					}
+				} else if(skipFallbackOrCallback !== false){
+					myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound,skipFallbackOrCallback);
 					if(myModule===undefined){
 						console.error("Module:",moduleName, "does not exists");
 					}
-					return myModule;
 				}
-			})();
+				return myModule;
+			})(__module__(moduleName));
 		}
 	};
 	var moduleNotFound = function(moduleName,callback){
 		var bundleName = fileUtil.forModule(moduleName,true);
 		if(is.Function(callback)){
+			console.info("I have searched for ",moduleName, "from", bundleName, "package");
 			require(bundleName,function(){
-				console.info("I have searched for ",moduleName, "from", bundleName, "package");
 				callback(module(moduleName,false));
 			});
 		} else {
