@@ -303,14 +303,14 @@
 				if(syncLoad){
 					filesToLoad.map(function(file){
 						fileUtil.js.loading[file] = true;
-						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir));
+						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir) + '?_=' + config.version);
 						fileUtil.js.loaded[file] = true;
 					});
 					if(callback) callback();
 				} else {
 					return head.load(filesToLoad.map(function(file){
 						fileUtil.js.loading[file] = true;
-						return config.resourceUrl+URI(file,config.resourceDir + '?_=' + config.version);
+						return config.resourceUrl+URI(file,config.resourceDir) + '?_=' + config.version;
 					}),callback);	
 				}
 			}
