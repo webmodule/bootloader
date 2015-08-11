@@ -224,7 +224,7 @@
 		var moduleName, onModules, extendsFrom;
 		if (typeof moduleInfo === "object") {
 			moduleName = moduleInfo.name || moduleInfo.module;
-			onModules = moduleInfo.dependsOn || moduleInfo.modules;
+			onModules = moduleInfo.using || moduleInfo.dependsOn || moduleInfo.modules;
 			extendsFrom = moduleInfo.extend;
 		} else if (typeof moduleInfo === "string") {
 			moduleName = moduleInfo;
