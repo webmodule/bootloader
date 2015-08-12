@@ -505,7 +505,10 @@
 			var indexJs = config.indexJs || resource.indexJs;
 			var indexBundle = config.indexBundle || resource.indexBundle;
 			setReady(2);
-
+			console.debug(resource.version);
+			if(config.debug !== true && resource.version !== undefined){
+				config.version = resource.version;
+			}
 			head.ready(function() {
 				setReady(3);
 				console.info("Bootloader : header Ready function");
