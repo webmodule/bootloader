@@ -1,38 +1,9 @@
 (function(foo) {
 	var bootloader,fileUtil,config;
-	var LIB = {}, READY_MAP = [];
+	var READY_MAP = [];
 
-	var __module__ = foo._module_;
-	/**
-	 * Getter for register modules, tries to search in bootloader library and
-	 * fallbacks to foo as default.
-	 * 
-	 * @param moduleName
-	 * @returns {*|{}|h.__modulePrototype__}
-	 */
-	var module = function(moduleName,skipFallbackOrCallback) {
-		if (LIB[moduleName]) {
-			if(is.Function(skipFallbackOrCallback)){
-				skipFallbackOrCallback(LIB[moduleName].__modulePrototype__);
-			}
-			return LIB[moduleName].__modulePrototype__;
-		} else if (__module__) {
-			return (function(myModule){
-				if(myModule){
-					if(is.Function(skipFallbackOrCallback)){
-						skipFallbackOrCallback(myModule);
-					}
-				} else if(skipFallbackOrCallback !== false){
-					myModule = foo.bootloader.moduleNotFound(moduleName,config.resource,moduleNotFound,skipFallbackOrCallback);
-					if(myModule===undefined){
-						console.error("Module:",moduleName, "does not exists");
-					}
-				}
-				return myModule;
-			})(__module__(moduleName));
-		}
-	};
-	var moduleNotFound = function(moduleName,callback){
+	foo.onmodulenotfound = function(moduleName,callback){
+		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
 		var bundleName = fileUtil.forModule(moduleName,true);
 		if(is.Function(callback)){
 			console.info("I have searched for ",moduleName, "from", bundleName, "package");
@@ -49,7 +20,7 @@
 	var STATE = [];
 	var setReady = function(num) {
 		STATE[num] = 0;
-		ready();
+		bootReady();
 	};
 	var isReady = function(){
 		return (STATE.join("-") === "0-0-0-0-0-0");
@@ -60,198 +31,20 @@
 	 * 
 	 * @param callback
 	 */
-	var ready = function(callback) {
+	var bootReady = function(callback) {
 		if (arguments.length > 0) {
+			console.info("===",bootReady);
 			READY_MAP.push(callback);
-			ready();
+			bootReady();
 		} else if (isReady()) {
 			console.info("Bootloader : bootloader is ready");
 			for ( var i in READY_MAP) {
 				foo.setTimeout(READY_MAP[i]);
 			}
 			READY_MAP = [];
-			ready = foo.setTimeout;
+			bootReady = foo.setTimeout;
 		}
 	};
-
-	/**
-	 * Module Contianer/Meta-Info
-	 * 
-	 * @param __modulePrototype__
-	 * @param dependsOn
-	 * @constructor
-	 */
-	var Moduler = function Moduler(__modulePrototype__, dependsOn) {
-		this.intialize.apply(this, arguments);
-		this.dependsOn = dependsOn;
-	};
-
-	Moduler.prototype = {
-		/**
-		 * Initialize moduler with default prototype
-		 * 
-		 * @param __modulePrototype__
-		 */
-		intialize : function(__modulePrototype__) {
-			this.__modulePrototype__ = __modulePrototype__ || {};
-		},
-		/**
-		 * returns module prototype
-		 * 
-		 * @returns {*|{}}
-		 */
-		module : function() {
-			return this.__modulePrototype__;
-		},
-		/**
-		 * Extends module from parent module
-		 * 
-		 * @param parentModuleName
-		 * @returns {Moduler}
-		 */
-		extend : function(parentModuleName) {
-			if (LIB[parentModuleName]) {
-				this.__modulePrototype__ = foo.mixin(Object
-						.create(module(parentModuleName) || {}),this.__modulePrototype__);
-				this.__modulePrototype__.__extend__ = [parentModuleName].concat(this.__modulePrototype__.__extend__);
-				LIB[parentModuleName].callOwnFunction("_extended_", this);
-			} else {
-				console.error("Parent Module " + parentModuleName
-						+ " does not exists");
-			}
-			return this;
-		},
-		/**
-		 * 
-		 * @param ChildProto
-		 * @returns {Moduler}
-		 */
-		mixin : function(ChildProto) {
-			for ( var i in ChildProto) {
-				if (ChildProto.hasOwnProperty(i) === true) {
-					this.__modulePrototype__[i] = ChildProto[i];
-				}
-			}
-			return this;
-		},
-		as : function(definition) {
-			var self = this;
-			if (typeof definition === 'function') {
-				var ChildProto;
-				if (this.dependsOn === undefined) {
-					ChildProto = definition.call(this,
-							this.__modulePrototype__, this.__modulePrototype__);
-				} else {
-					var deps = [ this.__modulePrototype__ ];
-					for ( var i in this.dependsOn) {
-						deps.push(foo._module_(this.dependsOn[i], false));
-					}
-					ChildProto = definition.apply(this, deps);
-				}
-				if (ChildProto !== undefined) {
-					this.mixin(ChildProto);
-				}
-			} else if (typeof definition === "object") {
-				this.mixin(definition);
-			}
-			this.callOwnFunction("_define_");
-			return this;
-		},
-		callOwnFunction : function(prop) {
-			if (this.__modulePrototype__.hasOwnProperty(prop) === true
-					&& typeof this.__modulePrototype__[prop] === "function") {
-				return this.__modulePrototype__[prop].apply(this.__modulePrototype__, arguments);
-			}
-		}
-	};
-
-	/***************************************************************************
-	 * Abstract Module
-	 **************************************************************************/
-	var AbstractModule = function AbstractModule(moduleName, file) {
-		this.name = moduleName;
-		this.__file__ = file;
-		this.__dir__ = "";
-		this.__extend__ = [];
-	};
-	AbstractModule.prototype = {
-		create : function(){
-			return this.instacne.apply(this,arguments);
-		},
-		instance : function() {
-			var newObj = Object.create(this);
-			(newObj._create_ || newObj._instance_).apply(newObj, arguments);
-			return newObj;
-		},
-		_instance_ : function() {
-		},
-		path : function(path){
-			return foo.URI(path,this.__dir__);
-		},
-		parent : function(){
-			if(this.__extend__ && this.__extend__[0]){
-				return module(this.__extend__[0]);
-			} else return AbstractModule.prototype;
-		},
-		mixin : function(source) {
-			for ( var i in source) {
-				if (source.hasOwnProperty(i) === true) {
-					this[i] = source[i];
-				}
-			}
-			return this;
-		},
-		is : function(type){
-			if(this.__extend__ && this.__extend__[0] && is.String(type)){
-				return !!this.__extend__.filter(function(iType){
-					return iType === type;
-				})[0];
-			}
-		}
-	};
-	
-	/**
-	 * 
-	 * Defines and registers module
-	 * 
-	 * @param moduleInfo -
-	 *            Name of module or Map of module info
-	 * @param definition -
-	 *            Module prototype or function returning module prototype.
-	 * @returns {*}
-	 */
-	var define = function(moduleInfo, definition,definition2) {
-		var moduleName, onModules, extendsFrom;
-		if (typeof moduleInfo === "object") {
-			moduleName = moduleInfo.name || moduleInfo.module;
-			onModules = moduleInfo.using || moduleInfo.dependsOn || moduleInfo.modules;
-			extendsFrom = moduleInfo.extend;
-		} else if (typeof moduleInfo === "string") {
-			moduleName = moduleInfo;
-			if(typeof definition === "string"){
-				extendsFrom = definition;
-				definition = definition2;
-			}
-		}
-		
-		LIB[moduleName] = new Moduler(new AbstractModule(moduleName), onModules);
-		LIB[moduleName].__moduleName__ = moduleName;
-
-		if(is.String(extendsFrom)){
-			LIB[moduleName].extend(extendsFrom);
-		}
-		
-		if (definition !== undefined) {
-			LIB[moduleName].as(definition);
-		}
-		
-		ready(function() {
-			LIB[moduleName].callOwnFunction("_ready_");
-		});
-		return LIB[moduleName];
-	};
-	
-	define("AbstractModule",AbstractModule.prototype);
 	
 	// Resources loading...
 	config = {
@@ -451,8 +244,7 @@
 			while(cb = this.list.pop()){
 				cb.call(foo,define,module);
 			}
-		},10),
-		define : define
+		},10)
 	};
 	
 	var importStyle = function(){
@@ -577,19 +369,17 @@
 			console.info("Bootloader : Config Set");
 		}
 	};
-	foo.bootloader.moduleNotFound = function(moduleName,resources,defaultFunction,callback){
-		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
-		return defaultFunction(moduleName,callback);
-	};
-	foo.bootloader.ready = ready;
+	
 	foo.bootloader.config = function(){
 		return config;
 	};
 
-	foo._setFoo_("define",define);
-	foo._setFoo_("module",module);
-	foo._setFoo_("require",require);
-	foo._setFoo_("importStyle",importStyle);
+	foo._define_.ready = function(){
+		return bootReady.apply(foo,arguments);
+	};
+	
+	foo._define_.setSafe("require",require);
+	foo._define_.setSafe("importStyle",importStyle);
 
 	foo.__get_all__ = function() {
 		return {
@@ -598,18 +388,9 @@
 		};
 	};
 
-	if (foo.define === undefined) {
-		foo.define = foo._define_;
-	}
-	if (foo.module === undefined) {
-		foo.module = foo._module_;
-	}
-	if (foo.require === undefined) {
-		foo.require = foo._require_;
-	}
-
 	if (foo.document && typeof document.addEventListener === "function") {
 		document.addEventListener("DOMContentLoaded", function(event) {
+			console.info("Bootloader : document is ready");
 			setReady(4);
 		});
 		window.addEventListener('load',function(){
