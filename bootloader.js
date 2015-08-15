@@ -485,8 +485,9 @@
 			output.load = output.load.unique();
 			if(arguments.length>0 && output.load.length>0){
 				fileUtil.js.load(output.load, function() {
-					(req).to(callback);
+					//Fill shud be done before calling callback as cllback might use paths
 					fileUtil.fill(output);
+					(req).to(callback);
 				},syncLoad && isReady());
 			} else {
 				return (req).to(callback);
