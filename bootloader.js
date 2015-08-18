@@ -1,15 +1,16 @@
 (function(foo) {
 	var bootloader,fileUtil,config;
 	var READY_MAP = [];
+  var bootReady;
 
 	foo.onmodulenotfound = function(moduleName,callback){
 		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
 		var bundleName = fileUtil.forModule(moduleName,true);
 		if(is.Function(callback)){
 			console.info("I have searched for ",moduleName, "from", bundleName, "package");
-			require(bundleName,function(){
-				callback(module(moduleName,false));
-			});
+      require(bundleName,function(){
+        callback(module(moduleName,false));
+      });
 		} else {
 			require(bundleName);
 		}
@@ -17,13 +18,13 @@
 	};
 
 	// Bootloaded ready functionality
-	var STATE = [];
+	var STATE = [],nowMReady;
 	var setReady = function(num) {
 		STATE[num] = 0;
 		bootReady();
 	};
 	var isReady = function(){
-		return (STATE.join("-") === "0-0-0-0-0-0");
+		return nowMReady || (STATE.join("-") === "0-0-0-0-0-0") && (nowMReady=true);
 	};
 
 	/**
@@ -31,9 +32,8 @@
 	 * 
 	 * @param callback
 	 */
-	var bootReady = function(callback) {
+	bootReady = function(callback) {
 		if (arguments.length > 0) {
-			console.info("===",bootReady);
 			READY_MAP.push(callback);
 			bootReady();
 		} else if (isReady()) {
@@ -267,23 +267,30 @@
 		}
 		var callback, syncLoad;
 		var req = new Require();
-		if (arguments.length > 0) {
-			if(typeof arguments[arguments.length-1] === "function"){
-				callback = [].pop.apply(arguments);
-			} else {
-				syncLoad = true;
-			}
-			var output = fileUtil.pkg.resolve(arguments);
-			output.load = output.load.unique();
-			if(arguments.length>0 && output.load.length>0){
-				fileUtil.js.load(output.load, function() {
-					//Fill shud be done before calling callback as cllback might use paths
-					fileUtil.fill(output);
-					(req).to(callback);
-				},syncLoad && isReady());
-			} else {
-				return (req).to(callback);
-			}
+		if (arguments.length > 0 && arguments[0]) {
+      if(typeof arguments[arguments.length-1] === "function"){
+        callback = [].pop.apply(arguments);
+      } else {
+        /**
+         * TO Avoid Recursive Loading, Module should not be downloaded syncronously
+         *  when first file is loading;
+         */
+        syncLoad = isReady() && true;
+      }
+      var output = fileUtil.pkg.resolve(arguments);
+      //Need to reverse to order while unifying as, last file shud be loaded in last for sure :)
+      output.load = output.load.reverse().unique().reverse();
+      if(arguments.length>0 && output.load.length>0){
+        //bootReady(function(){
+          fileUtil.js.load(output.load, function() {
+            //Fill shud be done before calling callback as cllback might use paths
+            fileUtil.fill(output);
+            (req).to(callback);
+          },syncLoad && isReady());
+        //});
+      } else {
+        return (req).to(callback);
+      }
 		}
 		return (req);
 	};
