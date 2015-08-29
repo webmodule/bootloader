@@ -75,7 +75,13 @@
 		},
 		js : {
 			loading : {},
-			loaded : {},
+      _loaded_ : {},
+			loaded : function(file, yesLoaded){
+        if(yesLoaded){
+          this._loaded_[file] = yesLoaded;
+        }
+        return this._loaded_[file];
+      },
 			loadScript : function(inFileName) {
 				var aScript, aScriptSource;
 				fileUtil.get(inFileName+"?_="+config.version,function(responseText){
@@ -94,14 +100,14 @@
 			},
 			load : function(filesToLoad, callback, syncLoad){
 				var filesToLoad = filesToLoad.filter(function(file){
-					//console.log(fileUtil.js.loading,fileUtil.js.loaded)
-					return (!fileUtil.js.loading[file] && !fileUtil.js.loaded[file]);
+					return (!fileUtil.js.loading[file] && !fileUtil.js.loaded(file));
 				});
-				if(syncLoad){
+
+        if(syncLoad){
 					filesToLoad.map(function(file){
 						fileUtil.js.loading[file] = true;
 						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir) + '?_=' + config.version);
-						fileUtil.js.loaded[file] = true;
+						fileUtil.js.loaded(file, true);
 					});
 					if(callback) callback();
 				} else {
@@ -159,11 +165,14 @@
 						var myPackage = config.resource.bundles[packageName];
 						if (myPackage) {
 							output.loadingPackage[packageName] = packageName;
+
 							if (myPackage.on) {
 								fileUtil.pkg.resolve(myPackage.on, output);
 							}
+
 							var budnled = (!config.debug && (myPackage.bundled && myPackage.bundled.length>0));
 							if (budnled) {
+
 								if(is.Array(myPackage.bundled)){
 									output.load = output.load.concat(myPackage.bundled);
 								} else {
@@ -172,7 +181,7 @@
 							}
 							for ( var j in myPackage.js) {
 								var file = myPackage.js[j];
-								if (!fileUtil.js.loaded[file]) {
+								if (!fileUtil.js.loaded(file)) {
 									output.files.push(file);
 									if (!budnled) {
 										output.load.push(file);
@@ -197,7 +206,7 @@
 					for(var i in bundle.js){
 						var yefile = bundle.js[i];
 						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");;
-						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded[yefile])){
+						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded(yefile))){
 							return bundleName;
 						}
 					}
@@ -207,7 +216,7 @@
 		fill : function(output) {
 			for ( var i in output.files) {
 				var filePath = output.files[i];
-				this.js.loaded[output.files[i]] = true;
+				this.js.loaded(output.files[i],true);
 				var info = foo.URI.info(output.files[i], config.resourceUrl + config.resourceDir);
 				var moduleName = info.file.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");
 				var moduleProto = module(moduleName,false);
@@ -217,7 +226,7 @@
 				}
 			}
 			for ( var i in output.load) {
-				this.js.loaded[output.load[i]] = true;
+				this.js.loaded(output.load[i], true);
 			}
 			for ( var packageName in output.loadingPackage) {
 				this.pkg.loaded[packageName] = packageName;
@@ -262,6 +271,11 @@
 	var require = function() {
 		if (foo.__bundled__ && foo.__bundled__.length) {
 			var fillObj = fileUtil.pkg.resolve(foo.__bundled__);
+
+      fillObj.load = fillObj.load.reverse().unique().reverse();
+      //fillObj.loadingPackage = fillObj.loadingPackage.reverse().unique().reverse();
+      fillObj.files = fillObj.files.reverse().unique().reverse();
+
 			fileUtil.fill(fillObj);
 			foo.__bundled__ = [];
 		}
