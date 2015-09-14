@@ -56,7 +56,9 @@
 		debug : false,
 		android : true,
 		indexJs : undefined, // 'app.js',
-		resource : {}
+		resource : {},
+    livereload : false,
+    livereloadUrl : null
 	};
 	
 	
@@ -343,6 +345,10 @@
 				require.apply(require,bundelsToLoad);
 			}
 
+      if(config.debug && config.livereload && config.livereloadUrl){
+        head.load([config.livereloadUrl]);
+      }
+
 			if (false && a.css.mediaprint) {
 				var el = document.createElement('link');
 				el.setAttribute("rel", "stylesheet");
@@ -383,7 +389,14 @@
 			if(!foo.is.Value(config.resourceDir)){
 				config.resourceDir = config.resourceDir || config.appContext;
 			}
+      if(!config.resourceUrl && foo.location){
+        config.resourceUrl = foo.location.origin;
+      }
 			config.version = (config.debug === false && config.version)?  config.version: (new Date()).getTime() ;
+      if(!foo.is.Value(config.livereloadUrl) && foo.URL){
+        var url = new foo.URL(config.resourceUrl);
+        config.livereloadUrl = url.protocol + "//"+url.hostname + ":35729/livereload.js"
+      }
 			setReady(1);
 			resourceLoader();
 			_config_set_ = true;
