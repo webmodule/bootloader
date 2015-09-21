@@ -394,7 +394,7 @@
       if(!config.resourceUrl && foo.location){
         config.resourceUrl = foo.location.origin;
       }
-			config.version = (config.debug === false && config.version)?  config.version: (new Date()).getTime() ;
+			config.version = (config.debug === false && config.version)?  config.version: "" ;
       if(!foo.is.Value(config.livereloadUrl) && foo.URL){
         var url = new foo.URL(config.resourceUrl);
         config.livereloadUrl = url.protocol + "//"+url.hostname + ":35729/livereload.js"
