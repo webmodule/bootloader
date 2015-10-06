@@ -86,7 +86,10 @@
       },
 			loadScript : function(inFileName) {
 				var aScript, aScriptSource;
+        if(fileUtil.js.loaded(inFileName) || fileUtil.js.loading[inFileName]) return false;
+        fileUtil.js.loading[inFileName] = true;
 				fileUtil.get(inFileName+"?_="+config.version,function(responseText){
+          fileUtil.js.loaded(inFileName, true);
 					// set the returned script text while adding special comment to auto include in debugger source listing:
 					aScriptSource = responseText + '\n////# sourceURL='+ inFileName + '\n';
 					if (true){
@@ -100,15 +103,15 @@
 					}
 				},false).send();
 			},
-			load : function(filesToLoad, callback, syncLoad){
-				var filesToLoad = filesToLoad.filter(function(file){
-					return (!fileUtil.js.loading[file] && !fileUtil.js.loaded(file));
+			load : function(files2Load, callback, syncLoad){
+				var filesToLoad = files2Load.filter(function(file){
+					return !(fileUtil.js.loading[file] || fileUtil.js.loaded(file));
 				});
 
         if(syncLoad){
 					filesToLoad.map(function(file){
 						fileUtil.js.loading[file] = true;
-						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir) + '?_=' + config.version);
+						fileUtil.js.loadScript(config.resourceUrl+URI(file,config.resourceDir));
 						fileUtil.js.loaded(file, true);
 					});
 					if(callback) callback();

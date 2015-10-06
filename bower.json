@@ -11,7 +11,7 @@
     "url": "git://github.com/webmodule/bootloader.git"
   },
   "dependencies": {
-  	"webmodules-foo" : ">=3.0.0",
+  	"webmodules-foo" : ">=3.1.5",
   	"webmodules-headjs" : "1.0.3"
   },
   "keywords": [
