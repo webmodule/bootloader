@@ -339,7 +339,7 @@
 				var bundelsToLoad = [indexBundle];
 				if(config.debugBundles){
 					bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
-				} else  if(config.debug){
+				} else  if(config.debug && config.loadAll){
 					bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
 				}
 				bundelsToLoad.push(function(){
