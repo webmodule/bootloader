@@ -384,9 +384,11 @@
 		for ( var i in _config) {
 			config[i] = _config[i];
 		}
+    config.bootConfigKey = "bootConfig" + (_config.name ? ("-" + _config.name ) : "");
+
 		if(init!==false && _config_set_ == false){
 			if(isLocalStorageAvailable){
-				var localConfig = JSON.parse(foo.localStorage.getItem("bootConfig") || null);
+				var localConfig = JSON.parse(foo.localStorage.getItem(config.bootConfigKey) || null);
 				for(var i in localConfig){
 					config[i] = localConfig[i];
 				}
