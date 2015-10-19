@@ -210,8 +210,8 @@
 					}
 					for(var i in bundle.js){
 						var yefile = bundle.js[i];
-						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");;
-						if(thisModuleName == moduleName && (!notLoaded || !fileUtil.js.loaded(yefile))){
+						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");
+						if(thisModuleName.toLowerCase() == moduleName.toLowerCase()  && (!notLoaded || !fileUtil.js.loaded(yefile))){
 							return bundleName;
 						}
 					}
@@ -274,6 +274,7 @@
 	};
 	
 	var require = function() {
+    console.error("----",arguments);
 		if (foo.__bundled__ && foo.__bundled__.length) {
 			var fillObj = fileUtil.pkg.resolve(foo.__bundled__);
 
@@ -301,6 +302,7 @@
       output.load = output.load.reverse().unique().reverse();
       if(arguments.length>0 && output.load.length>0){
         //bootReady(function(){
+          console.error("===",output);
           fileUtil.js.load(output.load, function() {
             //Fill shud be done before calling callback as cllback might use paths
             fileUtil.fill(output);
@@ -340,6 +342,7 @@
 				if(config.debugBundles){
 					bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
 				} else  if(config.debug && config.loadAll){
+          console.error("Loading all");
 					bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
 				}
 				bundelsToLoad.push(function(){
