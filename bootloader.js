@@ -208,10 +208,11 @@
 							return bundleName;
 						}
 					}
+          var moduleNameL = (moduleName+"").toLowerCase();
 					for(var i in bundle.js){
 						var yefile = bundle.js[i];
-						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"");
-						if(thisModuleName.toLowerCase() == moduleName.toLowerCase()  && (!notLoaded || !fileUtil.js.loaded(yefile))){
+						var thisModuleName = yefile.replace(/^.*[\\\/]/,"").replace(/\.js$/,"")+"";
+						if(thisModuleName.toLowerCase() == moduleNameL  && (!notLoaded || !fileUtil.js.loaded(yefile))){
 							return bundleName;
 						}
 					}
