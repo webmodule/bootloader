@@ -321,7 +321,7 @@
 
 		var xmlhttp = new XMLHttpRequest();
 		var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
-		fileUtil.get(info.href + "?_=" + config.version, function(resp){
+		fileUtil.get(info.href + "?_=" + (config.version || (new Date()).getTime()) , function(resp){
 			var resource = JSON.parse(this.responseText);
 			config.resource = resource;
 			var indexJs = config.indexJs || resource.indexJs;
