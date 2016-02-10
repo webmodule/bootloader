@@ -2,15 +2,24 @@
 	var bootloader,fileUtil,config;
 	var READY_MAP = [];
   var bootReady;
+  var MODULE_CALLBACKS = {};
 
 	foo.onmodulenotfound = function(moduleName,callback){
 		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
 		var bundleName = fileUtil.forModule(moduleName,true);
 		if(is.Function(callback)){
 			console.info("I have searched for ",moduleName, "from", bundleName, "package");
-      require(bundleName,function(){
-        callback(module(moduleName,false));
-      });
+      if(!MODULE_CALLBACKS[moduleName]){
+        MODULE_CALLBACKS[moduleName] = { cbs : []};
+        require(bundleName,function(){
+          var _MODULE = module(moduleName,false);
+          for(var i in MODULE_CALLBACKS[moduleName].cbs){
+            MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
+          }
+        });
+      } else {
+        MODULE_CALLBACKS[moduleName].cbs.push(callback);
+      }
 		} else {
 			require(bundleName);
 		}
