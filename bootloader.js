@@ -10,12 +10,13 @@
 		if(is.Function(callback)){
 			console.info("I have searched for ",moduleName, "from", bundleName, "package");
       if(!MODULE_CALLBACKS[moduleName]){
-        MODULE_CALLBACKS[moduleName] = { cbs : []};
+        MODULE_CALLBACKS[moduleName] = { cbs : [callback]};
         require(bundleName,function(){
           var _MODULE = module(moduleName,false);
           for(var i in MODULE_CALLBACKS[moduleName].cbs){
             MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
           }
+          delete MODULE_CALLBACKS[moduleName];
         });
       } else {
         MODULE_CALLBACKS[moduleName].cbs.push(callback);
