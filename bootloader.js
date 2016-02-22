@@ -62,13 +62,14 @@
 		appContext : "",
 		resourceDir : null,
 		resourceUrl : "",
-		resourceJson : "resources.json",
+		resourceJson : "dist/resource.json",
 		debug : false,
 		android : true,
 		indexJs : undefined, // 'app.js',
 		resource : {},
     livereload : false,
-    livereloadUrl : null
+    livereloadUrl : null,
+    debugBundles : []
 	};
 	
 	
@@ -330,37 +331,45 @@
 	var resourceLoader = function() {
 
 		var xmlhttp = new XMLHttpRequest();
-		var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
-		fileUtil.get(info.href + "?_=" + (config.version || (new Date()).getTime()) , function(resp){
-			var resource = JSON.parse(this.responseText);
-			config.resource = resource;
-			var indexJs = config.indexJs || resource.indexJs;
-			var indexBundle = config.indexBundle || resource.indexBundle;
-			setReady(2);
-			console.debug(resource.version);
-			if(config.debug !== true && resource.version !== undefined){
-				config.version = resource.version;
-			}
-			head.ready(function() {
-				setReady(3);
-				console.info("Bootloader : header Ready function");
-			});
+    (function(callback){
+      if(is.Object(config.resourceJson)){
+        callback(config.resourceJson);
+      } else {
+        var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
+        fileUtil.get(info.href + "?_=" + (config.version || (new Date()).getTime()),function(){
+          callback(JSON.parse(this.responseText));
+        },true).send();
+      }
+    })(function(resource){
+      //var resource = JSON.parse(this.responseText);
+      config.resource = resource;
+      var indexJs = config.indexJs || resource.indexJs;
+      var indexBundle = config.indexBundle || resource.indexBundle;
+      setReady(2);
+      console.debug(resource.version);
+      if(config.debug !== true && resource.version !== undefined){
+        config.version = resource.version;
+      }
+      head.ready(function() {
+        setReady(3);
+        console.info("Bootloader : header Ready function");
+      });
 
-			if (indexJs) {
-				fileUtil.js.load(indexJs);
-			} else if (indexBundle) {
-				var bundelsToLoad = [indexBundle];
-				if(config.debugBundles){
-					bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
-				} else  if(config.debug && config.loadAll){
+      if (indexJs) {
+        fileUtil.js.load(indexJs);
+      } else if (indexBundle) {
+        var bundelsToLoad = [indexBundle];
+        if(config.debugBundles){
+          bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
+        } else  if(config.debug && config.loadAll){
           console.error("Loading all");
-					bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
-				}
-				bundelsToLoad.push(function(){
-					console.info("Bootloader : Index bundle Loaded");
-				});
-				require.apply(require,bundelsToLoad);
-			}
+          bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
+        }
+        bundelsToLoad.push(function(){
+          console.info("Bootloader : Index bundle Loaded");
+        });
+        require.apply(require,bundelsToLoad);
+      }
 
       config.livereloadUrl = resource.livereloadUrl || config.livereloadUrl;
 
@@ -368,16 +377,16 @@
         head.load([config.livereloadUrl]);
       }
 
-			if (false && a.css.mediaprint) {
-				var el = document.createElement('link');
-				el.setAttribute("rel", "stylesheet");
-				el.setAttribute("type", "text/css");
-				el.setAttribute("href", config.resourceUrl + "/"
-						+ a.css.mediaprint);
-				el.setAttribute("media", "print");
-				document.getElementsByTagName('head')[0].appendChild(el);
-			}
-		},true).send();
+      if (false && a.css.mediaprint) {
+        var el = document.createElement('link');
+        el.setAttribute("rel", "stylesheet");
+        el.setAttribute("type", "text/css");
+        el.setAttribute("href", config.resourceUrl + "/"
+          + a.css.mediaprint);
+        el.setAttribute("media", "print");
+        document.getElementsByTagName('head')[0].appendChild(el);
+      }
+    });
 	};
 
 	var _config_set_ = false;
@@ -459,4 +468,14 @@
 })(this);
 
 var scripts = document.getElementsByTagName("script");
+
+(function(script){
+  var src= script.src, defBootLoader = "dist/bootloader_bundled/webmodules.bootloader.js";
+  if(src.indexOf(defBootLoader)>0){
+    src =  src.replace(defBootLoader,"");
+    if(src.replace("/","") !== ""){
+      bootloader.config().resourceUrl = src;
+    }
+  }
+})(scripts[ scripts.length - 1 ]);
 eval( scripts[ scripts.length - 1 ].innerHTML );
