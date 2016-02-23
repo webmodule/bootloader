@@ -57,12 +57,13 @@
 	};
 	
 	// Resources loading...
+  foo._BOOTLOADER_CONFIG_ = foo._BOOTLOADER_CONFIG_ || {}
 	config = {
 		baseUrl : "",
 		appContext : "",
 		resourceDir : null,
 		resourceUrl : "",
-		resourceJson : "dist/resource.json",
+		resourceJson : foo._BOOTLOADER_CONFIG_.RESOURCES_JSON || "dist/resource.json",
 		debug : false,
 		android : true,
 		indexJs : undefined, // 'app.js',
@@ -329,11 +330,11 @@
 	};
 
 	var resourceLoader = function() {
-
-		var xmlhttp = new XMLHttpRequest();
     (function(callback){
       if(is.Object(config.resourceJson)){
-        callback(config.resourceJson);
+        foo.setTimeout(function(){
+          callback(config.resourceJson);
+        });
       } else {
         var info = foo.URI.info(config.resourceJson, config.resourceUrl + config.resourceDir);
         fileUtil.get(info.href + "?_=" + (config.version || (new Date()).getTime()),function(){
@@ -416,6 +417,11 @@
 					config[i] = localConfig[i];
 				}
 			}
+
+      if(config.debug === true && is.Object(foo._BOOTLOADER_CONFIG_.RESOURCES_JSON)){
+         config.resourceJson = foo._BOOTLOADER_CONFIG_.RESOURCES_JSON.resourceJson || config.resourceJson;
+      }
+
 			if(!foo.is.Value(config.resourceDir)){
 				config.resourceDir = config.resourceDir || config.appContext;
 			}
