@@ -4,6 +4,25 @@
   var bootReady;
   var MODULE_CALLBACKS = {};
 
+
+  var counter = 0;
+  var cleanModuleCallbacks = foo.debounce(function(){
+    counter = 0;
+    for(var moduleName in MODULE_CALLBACKS){
+      counter++;
+      var _MODULE = module(moduleName,false);
+      if(_MODULE){
+        for(var i in MODULE_CALLBACKS[moduleName].cbs){
+          MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
+        }
+        delete MODULE_CALLBACKS[moduleName];
+      }
+    }
+    if(counter>0){
+      cleanModuleCallbacks();
+    }
+  },200);
+
 	foo.onmodulenotfound = function(moduleName,callback){
 		console.warn("Module",moduleName,"not found, will now try to resolve by bruteforce and call",callback);
 		var bundleName = fileUtil.forModule(moduleName,true);
@@ -24,6 +43,7 @@
 		} else {
 			require(bundleName);
 		}
+    cleanModuleCallbacks();
 		return module(moduleName,false);
 	};
 
