@@ -307,7 +307,6 @@
 	};
 	
 	var require = function() {
-    console.error("----",arguments);
 		if (foo.__bundled__ && foo.__bundled__.length) {
 			var fillObj = fileUtil.pkg.resolve(foo.__bundled__);
 
@@ -335,7 +334,6 @@
       output.load = output.load.reverse().unique().reverse();
       if(arguments.length>0 && output.load.length>0){
         //bootReady(function(){
-          console.error("===",output);
           fileUtil.js.load(output.load, function() {
             //Fill shud be done before calling callback as cllback might use paths
             fileUtil.fill(output);
@@ -383,7 +381,7 @@
         if(config.debugBundles){
           bundelsToLoad = bundelsToLoad.concat(config.debugBundles);
         } else  if(config.debug && config.loadAll){
-          console.error("Loading all");
+          console.info("Loading all",'debug=',config.debug);
           bundelsToLoad = bundelsToLoad.concat(Object.keys(resource.bundles));
         }
         bundelsToLoad.push(function(){
@@ -498,7 +496,6 @@ var scripts = document.getElementsByTagName("script");
 (function(script){
   var src= script.src, defBootLoader = "/bootloader_bundled/webmodules.bootloader.js";
   if(src.indexOf(defBootLoader)>0 && _BOOTLOADER_CONFIG_ &&  _BOOTLOADER_CONFIG_.RESOURCES_JSON && _BOOTLOADER_CONFIG_.RESOURCES_JSON.dest){
-    console.error("====",_BOOTLOADER_CONFIG_.RESOURCES_JSON.dest + defBootLoader)
     src =  src.replace(_BOOTLOADER_CONFIG_.RESOURCES_JSON.dest + defBootLoader,"");
     if(src.replace("/","") !== ""){
       bootloader.config().resourceUrl = src;
