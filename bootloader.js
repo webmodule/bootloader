@@ -471,7 +471,7 @@
 
 	foo.__get_all__ = function() {
 		return {
-			files : files,
+			files : fileUtil,
 			config : config
 		};
 	};
