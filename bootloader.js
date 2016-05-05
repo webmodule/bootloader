@@ -209,12 +209,18 @@
 
 							var budnled = (!config.debug && (myPackage.bundled && myPackage.bundled.length>0));
 							if (budnled) {
-
 								if(is.Array(myPackage.bundled)){
 									output.load = output.load.concat(myPackage.bundled);
 								} else {
 									output.load.push(myPackage.bundled);
 								}
+                output.load.map(function(bundled_file){
+                  for(var bundleName in config.resource.bundles){
+                    if(config.resource.bundles[bundleName].bundled && config.resource.bundles[bundleName].bundled.indexOf(bundled_file)>-1){
+                      fileUtil.pkg.resolve(config.resource.bundles[bundleName].on, output);
+                    }
+                  }
+                })
 							}
 							for ( var j in myPackage.js) {
 								var file = myPackage.js[j];
@@ -267,7 +273,7 @@
 				this.js.loaded(output.load[i], true);
 			}
 			for ( var packageName in output.loadingPackage) {
-				this.pkg.loaded[packageName] = packageName;
+				//this.pkg.loaded[packageName] = packageName;
 			}
 		}
 	};
@@ -314,7 +320,7 @@
       //fillObj.loadingPackage = fillObj.loadingPackage.reverse().unique().reverse();
       fillObj.files = fillObj.files.reverse().unique().reverse();
 
-			fileUtil.fill(fillObj);
+      fileUtil.fill(fillObj);
 			foo.__bundled__ = [];
 		}
 		var callback, syncLoad;
@@ -335,7 +341,7 @@
       if(arguments.length>0 && output.load.length>0){
         //bootReady(function(){
           fileUtil.js.load(output.load, function() {
-            //Fill shud be done before calling callback as cllback might use paths
+            //Fill shud be done before calling callback as callback might use paths
             fileUtil.fill(output);
             (req).to(callback);
           },syncLoad && isReady());
