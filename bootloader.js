@@ -476,7 +476,7 @@
   };
 
   foo.bootloader.module404 = function(moduleName){
-     console.error("404 : Module :",moduleName, "Not Found at all");
+     console.warn("404 : Module :",moduleName, "Not Found at all");
   };
 
   foo._define_.ready = function () {
