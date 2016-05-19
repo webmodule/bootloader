@@ -30,18 +30,24 @@
       console.info("I have searched for ", moduleName, "from", bundleName, "package");
       if (!MODULE_CALLBACKS[moduleName]) {
         MODULE_CALLBACKS[moduleName] = { cbs: [callback]};
-        require(bundleName, function () {
-          var _MODULE = module(moduleName, false);
-          for (var i in MODULE_CALLBACKS[moduleName].cbs) {
-            MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
-          }
-          delete MODULE_CALLBACKS[moduleName];
-        });
+        if(bundleName){
+            require(bundleName, function () {
+                var _MODULE = module(moduleName, false);
+                for (var i in MODULE_CALLBACKS[moduleName].cbs) {
+                    MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
+                }
+                delete MODULE_CALLBACKS[moduleName];
+            });
+        } else {
+            foo.bootloader.module404(moduleName);
+        }
       } else {
         MODULE_CALLBACKS[moduleName].cbs.push(callback);
       }
-    } else {
+    } else if(bundleName){
       require(bundleName);
+    } else {
+        foo.bootloader.module404(moduleName);
     }
     cleanModuleCallbacks();
     return module(moduleName, false);
@@ -467,6 +473,10 @@
 
   foo.bootloader.config = function () {
     return config;
+  };
+
+  foo.bootloader.module404 = function(moduleName){
+     console.error("404 : Module :",moduleName, "Not Found at all");
   };
 
   foo._define_.ready = function () {
