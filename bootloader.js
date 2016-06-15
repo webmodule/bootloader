@@ -513,7 +513,7 @@ var scripts = document.getElementsByTagName("script");
 (function (script) {
   var src = script.src, defBootLoader = "/bootloader_bundled/webmodules.bootloader.js";
   if (src.indexOf(defBootLoader) > 0 && _BOOTLOADER_CONFIG_ && _BOOTLOADER_CONFIG_.RESOURCES_JSON && _BOOTLOADER_CONFIG_.RESOURCES_JSON.dest) {
-    src = src.replace(_BOOTLOADER_CONFIG_.RESOURCES_JSON.dest + defBootLoader, "");
+    src = src.replace(_BOOTLOADER_CONFIG_.RESOURCES_JSON.dest, "").replace(/\/bootloader_bundled\/webmodules.bootloader.js(.*)/,"");
     if (src.replace("/", "") !== "") {
       bootloader.config().resourceUrl = src;
     }
