@@ -404,7 +404,7 @@
                 require.apply(require, bundelsToLoad);
             }
 
-            config.livereloadUrl = resource.livereloadUrl || config.livereloadUrl;
+            config.livereloadUrl = config.livereloadUrl || resource.livereloadUrl;
 
             if (config.debug && config.livereload && config.livereloadUrl) {
                 head.load([config.livereloadUrl]);
