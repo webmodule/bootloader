@@ -460,7 +460,7 @@
 
             if ((config.debug === true && is.Object(foo._BOOTLOADER_CONFIG_.RESOURCES_JSON))
                 || URI.info(origResUrl).host!=URI.info(config.resourceUrl).host) {
-                config.resourceJson = foo._BOOTLOADER_CONFIG_.RESOURCES_JSON.resourceJson || config.resourceJson;
+                config.resourceJson = (foo._BOOTLOADER_CONFIG_.RESOURCES_JSON || {}).resourceJson || config.resourceJson;
             }
 
             config.version = (config.debug === false || config.version) ? config.version : "";
