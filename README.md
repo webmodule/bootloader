@@ -3,7 +3,7 @@ Module Dependency Loader with bundlify
 
 ##define
 
-```
+```javascript
 define({
   module : "my.module",
   extend : "my.parent",
@@ -25,7 +25,7 @@ define({
 })
 ```
 ##module
-```
+```javascript
 module(["module1","module2"], function(module1,module2){
   
 });
@@ -34,13 +34,13 @@ module(["module1","module2"], function(module1,module2){
 ##importStyle 
 Import StyleSheets packages recursively as mentioned in module.json
 
-```
+```javascript
 __importStyle__("style/package/name");
 ```
 
 ##Hooks
 
-```
+```javascript
 bootloader.onmodulenotfound =  function(moduleName, callback){
   //this is fallback for module not found 
 };
