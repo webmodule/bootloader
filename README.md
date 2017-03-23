@@ -1,7 +1,29 @@
 # bootloader
 Module Dependency Loader with bundlify
 
-##define
+## Including Library
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<title>MyApp</title>
+</head>
+<body>
+    <script src="/dist/bootloader_bundled/webmodules.bootloader.js?version=beta-5.6&debug=false">
+        bootloader({
+            appContext: '',
+            indexBundle: "myapp/app",
+            debugBundles: [],
+            apiServer: "/data/"
+        });
+	</script>
+</body>
+
+</html>
+```
+
+## define
 
 ```javascript
 define({
@@ -24,21 +46,21 @@ define({
   
 })
 ```
-##module
+## module
 ```javascript
 module(["module1","module2"], function(module1,module2){
   
 });
 ```
 
-##importStyle 
+## importStyle 
 Import StyleSheets packages recursively as mentioned in module.json
 
 ```javascript
 __importStyle__("style/package/name");
 ```
 
-##Hooks
+## Hooks
 
 ```javascript
 bootloader.onmodulenotfound =  function(moduleName, callback){
