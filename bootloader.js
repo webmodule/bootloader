@@ -521,6 +521,10 @@ var scripts = document.getElementsByTagName("script");
         if (src.replace("/", "") !== "") {
             bootloader.config().resourceUrl = src;
         }
+        var q = URI.decode(new URI.info(script.src).search.substr(1));
+        for(var i in q){
+            bootloader.config()[i] = to.Native(q[i]);
+        }
     }
 })(scripts[ scripts.length - 1 ]);
 eval(scripts[ scripts.length - 1 ].innerHTML);
