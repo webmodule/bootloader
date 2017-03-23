@@ -10,7 +10,7 @@ Module Dependency Loader with bundlify
 <title>MyApp</title>
 </head>
 <body>
-    <script src="/dist/bootloader_bundled/webmodules.bootloader.js?version=beta-5.6&debug=false">
+    <script src="/dist/bootloader_bundled/webmodules.bootloader.js?version=beta-5.7&debug=false">
         bootloader({
             appContext: '',
             indexBundle: "myapp/app",
