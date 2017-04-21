@@ -1,6 +1,5 @@
 {
   "name": "webmodules-bootloader",
-  "version": "1.0.0",
   "main": "bootloader.js",
   "description": "Module loader",
   "authors": [
