@@ -3,6 +3,12 @@
 	"webmodules/bootloader": {
 		"js": ["bootloader.js"],
 		"on": ["webmodules/foo", "webmodules/foo/define", "webmodules/headjs"]
+	},
+	"webmodules/bootloader/amd": {
+		"on": ["webmodules/bootloader/requirejs","webmodules/bootloader"]
+	},
+	"webmodules/bootloader/requirejs": {
+		"js": ["../requirejs/require.js"]
 	}
 }
 

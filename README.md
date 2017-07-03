@@ -63,12 +63,7 @@ __importStyle__("style/package/name");
 ## Hooks
 
 ```javascript
-bootloader.onmodulenotfound =  function(moduleName, callback){
-  //this is fallback for module not found 
-};
-
 bootloader.module404 =  function(moduleName){
   //finally raise alert when module not found
 };
-
 ```
