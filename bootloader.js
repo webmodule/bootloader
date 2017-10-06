@@ -33,10 +33,12 @@
                 if (bundleName) {
                     require(bundleName, function() {
                         var _MODULE = module(moduleName, false);
-                        for (var i in MODULE_CALLBACKS[moduleName].cbs) {
-                            MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
+                        if(MODULE_CALLBACKS[moduleName]){
+                            for (var i in MODULE_CALLBACKS[moduleName].cbs) {
+                                MODULE_CALLBACKS[moduleName].cbs[i](_MODULE);
+                            }
+                            delete MODULE_CALLBACKS[moduleName];
                         }
-                        delete MODULE_CALLBACKS[moduleName];
                     });
                 } else {
                     foo.bootloader.module404(moduleName);
@@ -273,6 +275,13 @@
                 if (moduleProto) {
                     moduleProto.__file__ = info.file;
                     moduleProto.__dir__ = info.origin + info.dir;
+                } else {
+                    module(moduleName, (function (moduleName,info) {
+                        return function (moduleProto) {
+                            moduleProto.__file__ = info.file;
+                            moduleProto.__dir__ = info.origin + info.dir;
+                        };
+                    })(moduleName,info));
                 }
             }
             for (var i in output.load) {
@@ -465,7 +474,7 @@
 
             config.version = (config.debug === false || config.version) ? config.version : "";
             if (!foo.is.Value(config.livereloadUrl) && foo.URL) {
-                var url = new foo.URL(config.resourceUrl);
+                var url = URI.info(config.resourceUrl);
                 config.livereloadUrl = url.protocol + "//" + url.hostname + ":35729/livereload.js"
             }
             setReady(1);
